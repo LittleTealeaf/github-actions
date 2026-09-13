@@ -1,0 +1,46 @@
+name: 'Cargo Clippy'
+description: 'Runs cargo clippy on a Rust project with optional caching and customizable flags'
+author: 'Thomas Kwashnak'
+
+inputs:
+  toolchain:
+    description: 'Rust toolchain version to use (e.g. stable, nightly, 1.80.0)'
+    required: false
+    default: 'stable'
+  working-directory:
+    description: 'Working directory where Cargo commands should run'
+    required: false
+    default: '.'
+  args:
+    description: 'Arguments to pass to cargo clippy'
+    required: false
+    default: '--all-targets --all-features -- -D warnings'
+  cache:
+    description: 'Whether to use Swatinem/rust-cache'
+    required: false
+    default: 'true'
+  cache-key:
+    description: 'Additional cache key prefix if caching is enabled'
+    required: false
+    default: ''
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        toolchain: ${{ inputs.toolchain }}
+        components: clippy
+
+    - name: Cache cargo dependencies
+      if: inputs.cache == 'true'
+      uses: Swatinem/rust-cache@v2
+      with:
+        workspaces: ${{ inputs.working-directory }}
+        key: ${{ inputs.cache-key }}
+
+    - name: Run cargo clippy
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: cargo clippy ${{ inputs.args }}
