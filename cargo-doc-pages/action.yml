@@ -62,7 +62,7 @@ runs:
 
     - name: Setup Pages
       if: inputs.deploy == 'true'
-      uses: actions/configure-pages@v5
+      uses: actions/configure-pages@v6
 
     - name: Upload Pages Artifact
       if: inputs.deploy == 'true'
