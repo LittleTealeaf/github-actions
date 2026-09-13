@@ -1,0 +1,41 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "ci"
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: "github-actions"
+    directory: "/cargo-clippy"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "ci(cargo-clippy)"
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: "github-actions"
+    directory: "/cargo-fmt"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "ci(cargo-fmt)"
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: "github-actions"
+    directory: "/cargo-lint"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "ci(cargo-lint)"
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: "github-actions"
+    directory: "/cargo-test"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "ci(cargo-test)"
+    open-pull-requests-limit: 10
