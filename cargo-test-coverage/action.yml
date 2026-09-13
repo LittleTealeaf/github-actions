@@ -1,0 +1,83 @@
+name: 'Cargo Test Coverage'
+description: 'Runs cargo llvm-cov test, generates LCOV coverage report, uploads artifact, and writes summary'
+author: 'Thomas Kwashnak'
+
+inputs:
+  toolchain:
+    description: 'Rust toolchain version to use'
+    required: false
+    default: 'stable'
+  components:
+    description: 'Rust toolchain components'
+    required: false
+    default: 'llvm-tools'
+  working-directory:
+    description: 'Working directory for cargo commands'
+    required: false
+    default: '.'
+  args:
+    description: 'Arguments passed to cargo llvm-cov test'
+    required: false
+    default: '--no-fail-fast --all-features'
+  output-path:
+    description: 'LCOV output file path'
+    required: false
+    default: 'lcov.info'
+  upload-artifact:
+    description: 'Whether to upload LCOV file as an artifact'
+    required: false
+    default: 'true'
+  artifact-name:
+    description: 'Name of the uploaded artifact'
+    required: false
+    default: 'lcov'
+  retention-days:
+    description: 'Duration (days) to retain the uploaded artifact'
+    required: false
+    default: '1'
+  summary:
+    description: 'Whether to write coverage summary to GitHub step summary'
+    required: false
+    default: 'true'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Rust
+      uses: actions-rust-lang/setup-rust-toolchain@v1
+      with:
+        toolchain: ${{ inputs.toolchain }}
+        components: ${{ inputs.components }}
+
+    - name: Install Components
+      uses: taiki-e/install-action@v2
+      with:
+        tool: cargo-llvm-cov
+
+    - name: Run Tests with Coverage
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        cargo llvm-cov test ${{ inputs.args }} --lcov --output-path ${{ inputs.output-path }}
+
+    - name: Upload Coverage Artifact
+      if: inputs.upload-artifact == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ inputs.working-directory }}/${{ inputs.output-path }}
+        retention-days: ${{ inputs.retention-days }}
+
+    - name: Format Test Coverages
+      if: inputs.summary == 'true'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        awk '/SF:/{p=1; b=$0; next} p{b=b RS $0} /LF:/{f=$2} /LH:/{h=$2} /end_of_record/{if(f!=h) print b; p=0}' FS=: ${{ inputs.output-path }} > lcov_formatted.info
+        sed -i "s|$GITHUB_WORKSPACE/||g" lcov_formatted.info
+
+    - name: Write Coverage to Summary
+      if: inputs.summary == 'true'
+      uses: livewing/lcov-job-summary@v1.3.0
+      with:
+        lcov: ${{ inputs.working-directory }}/lcov_formatted.info

@@ -26,29 +26,20 @@ jobs:
           clippy-args: '-W clippy::todo'
 ```
 
-### `cargo-lint` / `cargo-fmt`
-Runs `cargo fmt --check` to verify code formatting.
+### `cargo-test-coverage`
+Runs `cargo llvm-cov test`, exports an LCOV coverage report, uploads the coverage artifact, and writes a coverage summary to the GitHub Actions Job Summary.
 
 ```yaml
-- name: Run Cargo Format Check
-  uses: LittleTealeaf/github-actions/cargo-lint@main
-  with:
-    toolchain: 'stable'
-    working-directory: '.'
-    args: '--all -- --check'
-```
-
-### `cargo-test`
-Runs `cargo test` with dependency caching and configurable flags.
-
-```yaml
-- name: Run Cargo Tests
-  uses: LittleTealeaf/github-actions/cargo-test@main
-  with:
-    toolchain: 'stable'
-    working-directory: '.'
-    args: '--all-targets --all-features'
-    cache: 'true'
+jobs:
+  test-coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Cargo Test Coverage
+        uses: LittleTealeaf/github-actions/cargo-test-coverage@main
+        with:
+          toolchain: 'stable'
+          args: '--no-fail-fast --all-features'
 ```
 
 ---
