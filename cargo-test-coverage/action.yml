@@ -156,11 +156,10 @@ runs:
       if: inputs.summary == 'true'
       shell: bash
       working-directory: ${{ inputs.working-directory }}
-      run: |
-        if [ -f "${{ inputs.output-path }}" ]; then
-          awk '/SF:/{p=1; b=$0; next} p{b=b RS $0} /LF:/{f=$2} /LH:/{h=$2} /end_of_record/{if(f!=h) print b; p=0}' FS=: ${{ inputs.output-path }} > lcov_formatted.info
-          sed -i "s|$GITHUB_WORKSPACE/||g" lcov_formatted.info
-        fi
+      env:
+        LCOV_INPUT: ${{ inputs.output-path }}
+        LCOV_OUTPUT: lcov_formatted.info
+      run: python3 "${{ github.action_path }}/format_lcov.py"
 
     - name: Write Coverage to Summary
       if: inputs.summary == 'true'

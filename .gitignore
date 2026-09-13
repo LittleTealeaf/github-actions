@@ -1,6 +1,32 @@
-# General
+# Rust
 target/
 **/*.rs.bk
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Generated Test & Coverage Artifacts
+*.info
+*.sarif
+rust-clippy-results.sarif
+
+# Editors & IDEs
+.vscode/
+.idea/
 *.swp
+*.swo
 *~
+
+# Operating System
 .DS_Store
+Thumbs.db
