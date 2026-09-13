@@ -46,11 +46,21 @@ runs:
         CRATE_NAME="${{ inputs.crate-name }}"
         if [ -z "$CRATE_NAME" ]; then
           if [ -f "Cargo.toml" ]; then
-            CRATE_NAME=$(cargo pkgid 2>/dev/null | cut -d# -f2 | cut -d: -f1 | tr '-' '_')
+            CRATE_NAME=$(awk -F '["'\'']' '/^\[package\]/ {in_pkg=1} in_pkg && /^name[[:space:]]*=/ {print $2; exit}' Cargo.toml | tr '-' '_')
             if [ -z "$CRATE_NAME" ]; then
-              CRATE_NAME=$(awk -F '["'\'']' '/^name[[:space:]]*=/ {print $2; exit}' Cargo.toml | tr '-' '_')
+              CRATE_NAME=$(cargo read-manifest 2>/dev/null | grep -o '"name":"[^"]*"' | head -1 | cut -d'"' -f4 | tr '-' '_')
             fi
           fi
+        fi
+
+        if [ -z "$CRATE_NAME" ]; then
+          for d in target/doc/*/; do
+            base=$(basename "$d")
+            if [ "$base" != "src" ] && [ "$base" != "implementors" ] && [ -f "${d}index.html" ]; then
+              CRATE_NAME="$base"
+              break
+            fi
+          done
         fi
 
         if [ -n "$CRATE_NAME" ]; then
