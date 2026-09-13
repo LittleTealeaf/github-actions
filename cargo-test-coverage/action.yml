@@ -15,10 +15,46 @@ inputs:
     description: 'Working directory for cargo commands'
     required: false
     default: '.'
-  args:
-    description: 'Arguments passed to cargo llvm-cov test'
+  packages:
+    description: 'Specific workspace package(s) to test (space-separated, e.g. "pkg1 pkg2")'
     required: false
-    default: '--no-fail-fast --all-features'
+    default: ''
+  workspace:
+    description: 'Whether to explicitly pass --workspace'
+    required: false
+    default: 'false'
+  all-features:
+    description: 'Whether to pass --all-features'
+    required: false
+    default: 'true'
+  features:
+    description: 'List of features to enable (e.g. "feat1,feat2")'
+    required: false
+    default: ''
+  no-default-features:
+    description: 'Whether to pass --no-default-features'
+    required: false
+    default: 'false'
+  all-targets:
+    description: 'Whether to pass --all-targets'
+    required: false
+    default: 'false'
+  no-fail-fast:
+    description: 'Whether to pass --no-fail-fast'
+    required: false
+    default: 'true'
+  ignore-filename-regex:
+    description: 'Regex pattern of files to ignore in coverage'
+    required: false
+    default: ''
+  args:
+    description: 'Additional raw arguments passed to cargo llvm-cov test'
+    required: false
+    default: ''
+  test-args:
+    description: 'Arguments passed to the test binary after --'
+    required: false
+    default: ''
   output-path:
     description: 'LCOV output file path'
     required: false
@@ -58,7 +94,55 @@ runs:
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: |
-        cargo llvm-cov test ${{ inputs.args }} --lcov --output-path ${{ inputs.output-path }}
+        CMD=("cargo" "llvm-cov" "test")
+
+        if [ "${{ inputs.all-features }}" = "true" ]; then
+          CMD+=("--all-features")
+        fi
+
+        if [ "${{ inputs.no-default-features }}" = "true" ]; then
+          CMD+=("--no-default-features")
+        fi
+
+        if [ -n "${{ inputs.features }}" ]; then
+          CMD+=("--features" "${{ inputs.features }}")
+        fi
+
+        if [ "${{ inputs.workspace }}" = "true" ]; then
+          CMD+=("--workspace")
+        fi
+
+        if [ "${{ inputs.all-targets }}" = "true" ]; then
+          CMD+=("--all-targets")
+        fi
+
+        if [ "${{ inputs.no-fail-fast }}" = "true" ]; then
+          CMD+=("--no-fail-fast")
+        fi
+
+        if [ -n "${{ inputs.packages }}" ]; then
+          for pkg in ${{ inputs.packages }}; do
+            CMD+=("--package" "$pkg")
+          done
+        fi
+
+        if [ -n "${{ inputs.ignore-filename-regex }}" ]; then
+          CMD+=("--ignore-filename-regex" "${{ inputs.ignore-filename-regex }}")
+        fi
+
+        if [ -n "${{ inputs.args }}" ]; then
+          read -ra EXTRA <<< "${{ inputs.args }}"
+          CMD+=("${EXTRA[@]}")
+        fi
+
+        CMD+=("--lcov" "--output-path" "${{ inputs.output-path }}")
+
+        if [ -n "${{ inputs.test-args }}" ]; then
+          CMD+=("--" ${{ inputs.test-args }})
+        fi
+
+        echo "Running command: ${CMD[*]}"
+        "${CMD[@]}"
 
     - name: Upload Coverage Artifact
       if: inputs.upload-artifact == 'true'
@@ -73,8 +157,10 @@ runs:
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: |
-        awk '/SF:/{p=1; b=$0; next} p{b=b RS $0} /LF:/{f=$2} /LH:/{h=$2} /end_of_record/{if(f!=h) print b; p=0}' FS=: ${{ inputs.output-path }} > lcov_formatted.info
-        sed -i "s|$GITHUB_WORKSPACE/||g" lcov_formatted.info
+        if [ -f "${{ inputs.output-path }}" ]; then
+          awk '/SF:/{p=1; b=$0; next} p{b=b RS $0} /LF:/{f=$2} /LH:/{h=$2} /end_of_record/{if(f!=h) print b; p=0}' FS=: ${{ inputs.output-path }} > lcov_formatted.info
+          sed -i "s|$GITHUB_WORKSPACE/||g" lcov_formatted.info
+        fi
 
     - name: Write Coverage to Summary
       if: inputs.summary == 'true'

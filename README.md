@@ -27,7 +27,7 @@ jobs:
 ```
 
 ### `cargo-test-coverage`
-Runs `cargo llvm-cov test`, exports an LCOV coverage report, uploads the coverage artifact, and writes a coverage summary to the GitHub Actions Job Summary.
+Runs `cargo llvm-cov test`, exports an LCOV coverage report, uploads the coverage artifact, and writes a coverage summary to the GitHub Actions Job Summary. Supports specifying packages, workspaces, features, and custom arguments.
 
 ```yaml
 jobs:
@@ -39,7 +39,15 @@ jobs:
         uses: LittleTealeaf/github-actions/cargo-test-coverage@main
         with:
           toolchain: 'stable'
-          args: '--no-fail-fast --all-features'
+          packages: '' # optional space-separated list, e.g. "crate-a crate-b"
+          workspace: 'false' # or 'true' to pass --workspace
+          all-features: 'true'
+          features: '' # optional feature flags, e.g. "feat1,feat2"
+          all-targets: 'false'
+          no-fail-fast: 'true'
+          output-path: 'lcov.info'
+          upload-artifact: 'true'
+          summary: 'true'
 ```
 
 ---
