@@ -50,6 +50,44 @@ jobs:
           summary: 'true'
 ```
 
+### `cargo-doc-pages`
+Builds Rust documentation (`cargo doc`), generates a root redirect `index.html` to the crate docs, sets up `.nojekyll`, packages the documentation, and deploys it to GitHub Pages.
+
+> **Note**: Requires the following workflow permissions and concurrency settings:
+> ```yaml
+> permissions:
+>   contents: read
+>   pages: write
+>   id-token: write
+>
+> concurrency:
+>   group: "pages"
+>   cancel-in-progress: false
+> ```
+
+```yaml
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy-docs.outputs.page-url }}
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build & Deploy Docs
+        id: deploy-docs
+        uses: LittleTealeaf/github-actions/cargo-doc-pages@main
+        with:
+          crate-name: '' # optional: auto-detected from Cargo.toml if omitted
+          toolchain: 'stable'
+          args: '--no-deps --all-features --workspace'
+          deploy: 'true'
+```
+
 ---
 
 ## License

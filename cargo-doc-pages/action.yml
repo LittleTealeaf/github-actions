@@ -1,0 +1,76 @@
+name: 'Cargo Doc Pages'
+description: 'Builds Rust documentation, generates redirect index.html and .nojekyll, and deploys to GitHub Pages'
+author: 'Thomas Kwashnak'
+
+inputs:
+  crate-name:
+    description: 'Primary crate name for documentation redirect (default auto-detected from Cargo.toml with - converted to _)'
+    required: false
+    default: ''
+  toolchain:
+    description: 'Rust toolchain version to use'
+    required: false
+    default: 'stable'
+  working-directory:
+    description: 'Working directory for cargo commands'
+    required: false
+    default: '.'
+  args:
+    description: 'Arguments passed to cargo doc'
+    required: false
+    default: '--no-deps --all-features --workspace'
+  deploy:
+    description: 'Whether to deploy to GitHub Pages'
+    required: false
+    default: 'true'
+
+outputs:
+  page-url:
+    description: 'The URL of the deployed GitHub Pages site'
+    value: ${{ steps.deployment.outputs.page_url }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Rust
+      uses: actions-rust-lang/setup-rust-toolchain@v1
+      with:
+        toolchain: ${{ inputs.toolchain }}
+
+    - name: Build Rust Documentation
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        cargo doc ${{ inputs.args }}
+
+        CRATE_NAME="${{ inputs.crate-name }}"
+        if [ -z "$CRATE_NAME" ]; then
+          if [ -f "Cargo.toml" ]; then
+            CRATE_NAME=$(cargo pkgid 2>/dev/null | cut -d# -f2 | cut -d: -f1 | tr '-' '_')
+            if [ -z "$CRATE_NAME" ]; then
+              CRATE_NAME=$(awk -F '["'\'']' '/^name[[:space:]]*=/ {print $2; exit}' Cargo.toml | tr '-' '_')
+            fi
+          fi
+        fi
+
+        if [ -n "$CRATE_NAME" ]; then
+          echo "Setting up root index redirect to ${CRATE_NAME}/index.html"
+          echo "<meta http-equiv=\"refresh\" content=\"0; url=${CRATE_NAME}/index.html\">" > target/doc/index.html
+        fi
+
+        touch target/doc/.nojekyll
+
+    - name: Setup Pages
+      if: inputs.deploy == 'true'
+      uses: actions/configure-pages@v5
+
+    - name: Upload Pages Artifact
+      if: inputs.deploy == 'true'
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: ${{ inputs.working-directory }}/target/doc
+
+    - name: Deploy to GitHub Pages
+      if: inputs.deploy == 'true'
+      id: deployment
+      uses: actions/deploy-pages@v4

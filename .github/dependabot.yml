@@ -23,3 +23,11 @@ updates:
     commit-message:
       prefix: "ci(cargo-test-coverage)"
     open-pull-requests-limit: 10
+
+  - package-ecosystem: "github-actions"
+    directory: "/cargo-doc-pages"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "ci(cargo-doc-pages)"
+    open-pull-requests-limit: 10
