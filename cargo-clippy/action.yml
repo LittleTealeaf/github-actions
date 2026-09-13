@@ -1,46 +1,61 @@
 name: 'Cargo Clippy'
-description: 'Runs cargo clippy on a Rust project with optional caching and customizable flags'
+description: 'Runs cargo clippy with SARIF output formatting and uploads results to GitHub Code Scanning'
 author: 'Thomas Kwashnak'
 
 inputs:
   toolchain:
-    description: 'Rust toolchain version to use (e.g. stable, nightly, 1.80.0)'
+    description: 'Rust toolchain version to use'
     required: false
     default: 'stable'
+  components:
+    description: 'Rust toolchain components'
+    required: false
+    default: 'clippy'
   working-directory:
-    description: 'Working directory where Cargo commands should run'
+    description: 'Working directory for cargo commands'
     required: false
     default: '.'
   args:
-    description: 'Arguments to pass to cargo clippy'
+    description: 'Arguments passed to cargo clippy before --'
     required: false
-    default: '--all-targets --all-features -- -D warnings'
-  cache:
-    description: 'Whether to use Swatinem/rust-cache'
+    default: '--all --no-deps --all-features'
+  clippy-args:
+    description: 'Arguments passed to clippy after --'
+    required: false
+    default: '-W clippy::todo'
+  upload-sarif:
+    description: 'Whether to upload SARIF results to GitHub code scanning'
     required: false
     default: 'true'
-  cache-key:
-    description: 'Additional cache key prefix if caching is enabled'
+  sarif-file:
+    description: 'SARIF output filename'
     required: false
-    default: ''
+    default: 'rust-clippy-results.sarif'
 
 runs:
   using: 'composite'
   steps:
-    - name: Set up Rust toolchain
-      uses: dtolnay/rust-toolchain@stable
+    - name: Setup Rust
+      uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
         toolchain: ${{ inputs.toolchain }}
-        components: clippy
+        components: ${{ inputs.components }}
 
-    - name: Cache cargo dependencies
-      if: inputs.cache == 'true'
-      uses: Swatinem/rust-cache@v2
+    - name: Install Components
+      uses: taiki-e/install-action@v2
       with:
-        workspaces: ${{ inputs.working-directory }}
-        key: ${{ inputs.cache-key }}
+        tool: sarif-fmt,clippy-sarif
 
-    - name: Run cargo clippy
+    - name: Run Clippy
       shell: bash
       working-directory: ${{ inputs.working-directory }}
-      run: cargo clippy ${{ inputs.args }}
+      run: |
+        cargo clippy ${{ inputs.args }} --message-format=json -- ${{ inputs.clippy-args }} | sort | uniq | clippy-sarif | tee ${{ inputs.sarif-file }} | sarif-fmt
+      continue-on-error: true
+
+    - name: Upload Clippy Results
+      if: inputs.upload-sarif == 'true'
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: ${{ inputs.working-directory }}/${{ inputs.sarif-file }}
+        wait-for-processing: true
