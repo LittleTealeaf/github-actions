@@ -4,6 +4,8 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7
     commit-message:
       prefix: "ci"
     open-pull-requests-limit: 10
@@ -12,6 +14,8 @@ updates:
     directory: "/cargo-clippy"
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7
     commit-message:
       prefix: "ci(cargo-clippy)"
     open-pull-requests-limit: 10
@@ -20,6 +24,8 @@ updates:
     directory: "/cargo-test-coverage"
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7
     commit-message:
       prefix: "ci(cargo-test-coverage)"
     open-pull-requests-limit: 10
@@ -28,6 +34,8 @@ updates:
     directory: "/cargo-doc-pages"
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7
     commit-message:
       prefix: "ci(cargo-doc-pages)"
     open-pull-requests-limit: 10
