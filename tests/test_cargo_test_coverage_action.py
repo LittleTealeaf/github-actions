@@ -207,10 +207,11 @@ class TestCargoTestCoverageActionYaml(unittest.TestCase):
             "toolchain",
             "components",
             "working-directory",
+            "workspaces",
             "packages",
             "workspace",
-            "all-features",
             "features",
+            "all-features",
             "no-default-features",
             "all-targets",
             "no-fail-fast",
@@ -302,7 +303,7 @@ class TestCargoTestCoverageActionYaml(unittest.TestCase):
         steps = self.data.get("runs", {}).get("steps", [])
         step = next((s for s in steps if s.get("name") == "Upload Coverage Artifact"), None)
         self.assertIsNotNone(step)
-        self.assertEqual(step.get("if"), "inputs.upload-artifact == 'true'")
+        self.assertEqual(step.get("if"), "inputs.upload-artifact == 'true' && inputs.artifact-name != ''")
         self.assertIn("actions/upload-artifact", step.get("uses", ""))
         with_params = step.get("with", {})
         self.assertEqual(with_params.get("name"), "${{ inputs.artifact-name }}")
@@ -338,6 +339,18 @@ class TestCargoTestCoverageActionYaml(unittest.TestCase):
         matches = re.findall(r"inputs\.([a-zA-Z0-9_-]+)", self.raw_content)
         for match in matches:
             self.assertIn(match, defined_inputs, f"Referenced input '{match}' not found in inputs definition")
+
+    def test_run_step_handles_workspaces_and_features(self):
+        """Verify the Run Tests with Coverage script handles workspaces and features correctly."""
+        steps = self.data.get("runs", {}).get("steps", [])
+        step = next((s for s in steps if s.get("name") == "Run Tests with Coverage"), None)
+        self.assertIsNotNone(step)
+        run_script = step.get("run", "")
+        self.assertIn("inputs.workspaces", run_script)
+        self.assertIn("inputs.features", run_script)
+        self.assertIn("--all-features", run_script)
+        self.assertIn("--package", run_script)
+        self.assertIn("--workspace", run_script)
 
 
 if __name__ == "__main__":

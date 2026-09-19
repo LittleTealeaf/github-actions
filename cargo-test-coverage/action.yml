@@ -15,20 +15,24 @@ inputs:
     description: 'Working directory for cargo commands'
     required: false
     default: '.'
+  workspaces:
+    description: 'Workspace member(s) or package(s) to test (space-separated, e.g. "pkg1 pkg2"). If "true", passes --workspace. If left blank, does not define any package/workspace flags.'
+    required: false
+    default: ''
   packages:
-    description: 'Specific workspace package(s) to test (space-separated, e.g. "pkg1 pkg2")'
+    description: 'Alias for workspaces'
     required: false
     default: ''
   workspace:
-    description: 'Whether to explicitly pass --workspace'
+    description: 'Alias for workspaces'
     required: false
-    default: 'false'
+    default: ''
+  features:
+    description: 'List of features to enable (space or comma-separated, e.g. "feat1 feat2" or "feat1,feat2"). If "all" or "true", passes --all-features. If left blank, does not define any feature flags.'
+    required: false
+    default: ''
   all-features:
     description: 'Whether to pass --all-features'
-    required: false
-    default: 'true'
-  features:
-    description: 'List of features to enable (e.g. "feat1,feat2")'
     required: false
     default: ''
   no-default-features:
@@ -64,7 +68,7 @@ inputs:
     required: false
     default: 'true'
   artifact-name:
-    description: 'Name of the uploaded artifact'
+    description: 'Name of the uploaded artifact (if left blank, artifact upload is skipped)'
     required: false
     default: 'lcov'
   retention-days:
@@ -96,20 +100,32 @@ runs:
       run: |
         CMD=("cargo" "llvm-cov" "test")
 
-        if [ "${{ inputs.all-features }}" = "true" ]; then
+        if [ "${{ inputs.all-features }}" = "true" ] || [ "${{ inputs.features }}" = "all" ] || [ "${{ inputs.features }}" = "true" ] || [ "${{ inputs.features }}" = "--all-features" ]; then
           CMD+=("--all-features")
+        elif [ -n "${{ inputs.features }}" ] && [ "${{ inputs.features }}" != "false" ]; then
+          FEATS="${{ inputs.features }}"
+          FEATS_COMMA=$(echo "$FEATS" | tr ' ' ',')
+          CMD+=("--features" "$FEATS_COMMA")
         fi
 
         if [ "${{ inputs.no-default-features }}" = "true" ]; then
           CMD+=("--no-default-features")
         fi
 
-        if [ -n "${{ inputs.features }}" ]; then
-          CMD+=("--features" "${{ inputs.features }}")
+        WS="${{ inputs.workspaces }}"
+        if [ -z "$WS" ]; then
+          WS="${{ inputs.packages }}"
+        fi
+        if [ -z "$WS" ]; then
+          WS="${{ inputs.workspace }}"
         fi
 
-        if [ "${{ inputs.workspace }}" = "true" ]; then
+        if [ "$WS" = "true" ] || [ "$WS" = "all" ] || [ "$WS" = "--workspace" ]; then
           CMD+=("--workspace")
+        elif [ -n "$WS" ] && [ "$WS" != "false" ]; then
+          for pkg in $WS; do
+            CMD+=("--package" "$pkg")
+          done
         fi
 
         if [ "${{ inputs.all-targets }}" = "true" ]; then
@@ -118,12 +134,6 @@ runs:
 
         if [ "${{ inputs.no-fail-fast }}" = "true" ]; then
           CMD+=("--no-fail-fast")
-        fi
-
-        if [ -n "${{ inputs.packages }}" ]; then
-          for pkg in ${{ inputs.packages }}; do
-            CMD+=("--package" "$pkg")
-          done
         fi
 
         if [ -n "${{ inputs.ignore-filename-regex }}" ]; then
@@ -145,7 +155,7 @@ runs:
         "${CMD[@]}"
 
     - name: Upload Coverage Artifact
-      if: inputs.upload-artifact == 'true'
+      if: inputs.upload-artifact == 'true' && inputs.artifact-name != ''
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4.6.1
       with:
         name: ${{ inputs.artifact-name }}

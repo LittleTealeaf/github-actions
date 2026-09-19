@@ -290,7 +290,7 @@ class TestCargoClippyActionYaml(unittest.TestCase):
         steps = self.data.get("runs", {}).get("steps", [])
         step = next((s for s in steps if s.get("name") == "Upload Clippy Results"), None)
         self.assertIsNotNone(step)
-        self.assertEqual(step.get("if"), "inputs.upload-sarif == 'true'")
+        self.assertEqual(step.get("if"), "inputs.upload-sarif == 'true' && inputs.sarif-file != ''")
         self.assertIn("github/codeql-action/upload-sarif", step.get("uses", ""))
         with_params = step.get("with", {})
         self.assertEqual(with_params.get("sarif_file"), "${{ inputs.working-directory }}/${{ inputs.sarif-file }}")

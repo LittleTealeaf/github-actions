@@ -39,14 +39,12 @@ jobs:
         uses: LittleTealeaf/github-actions/cargo-test-coverage@main
         with:
           toolchain: 'stable'
-          packages: '' # optional space-separated list, e.g. "crate-a crate-b"
-          workspace: 'false' # or 'true' to pass --workspace
-          all-features: 'true'
-          features: '' # optional feature flags, e.g. "feat1,feat2"
+          workspaces: '' # optional space-separated list, e.g. "crate-a crate-b", or 'true' to pass --workspace
+          features: '' # optional feature flags, e.g. "feat1,feat2" or 'all' for --all-features
           all-targets: 'false'
           no-fail-fast: 'true'
           output-path: 'lcov.info'
-          upload-artifact: 'true'
+          artifact-name: 'lcov' # set to '' to disable upload
           summary: 'true'
 ```
 
@@ -87,6 +85,16 @@ jobs:
           args: '--no-deps --all-features --workspace'
           deploy: 'true'
 ```
+
+---
+
+## Automated Releases
+
+This repository includes an automated SemVer release workflow ([`.github/workflows/release.yml`](file:///.github/workflows/release.yml)). On push to `main`, it:
+1. Runs the test suite across all actions and helper scripts.
+2. Analyzes conventional commits since the previous git tag.
+3. Automatically increments the semantic version (`major` for breaking changes, `minor` for `feat:`, `patch` for `fix:`/chores).
+4. Generates a categorized markdown changelog, tags the commit, updates the floating major version tag (e.g. `v1`), and publishes a GitHub Release.
 
 ---
 
