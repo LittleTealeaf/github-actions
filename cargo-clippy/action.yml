@@ -55,7 +55,7 @@ runs:
 
     - name: Upload Clippy Results
       if: inputs.upload-sarif == 'true' && inputs.sarif-file != ''
-      uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v3.28.11
+      uses: github/codeql-action/upload-sarif@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v3.28.11
       with:
         sarif_file: ${{ inputs.working-directory }}/${{ inputs.sarif-file }}
         wait-for-processing: true
