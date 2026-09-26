@@ -44,7 +44,7 @@ runs:
   using: 'composite'
   steps:
     - name: Setup uv
-      uses: astral-sh/setup-uv@f94e3d4e7e11248f4577bc82d02a1ce33ca723d1 # v5.3.1
+      uses: astral-sh/setup-uv@f94ec6bedd8674c4426838e6b50417d36b6ab231 # v5.3.1
       with:
         version: ${{ inputs.uv-version }}
         python-version: ${{ inputs.python-version }}
