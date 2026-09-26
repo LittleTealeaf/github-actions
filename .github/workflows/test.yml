@@ -1,0 +1,88 @@
+name: Test Actions
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-cargo-clippy:
+    name: Test Cargo Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Run Cargo Clippy Action
+        uses: ./cargo-clippy
+        with:
+          working-directory: fixtures/sample-crate
+          upload-sarif: 'false'
+
+      - name: Verify SARIF output file
+        run: |
+          test -f fixtures/sample-crate/rust-clippy-results.sarif
+
+  test-cargo-test-coverage:
+    name: Test Cargo Test Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Run Cargo Test Coverage Action
+        uses: ./cargo-test-coverage
+        with:
+          working-directory: fixtures/sample-crate
+          upload-artifact: 'false'
+          summary: 'true'
+
+      - name: Verify LCOV outputs
+        run: |
+          test -f fixtures/sample-crate/lcov.info
+          test -f fixtures/sample-crate/lcov_formatted.info
+
+  test-cargo-doc-pages:
+    name: Test Cargo Doc Pages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Run Cargo Doc Pages Action
+        uses: ./cargo-doc-pages
+        with:
+          working-directory: fixtures/sample-crate
+          deploy: 'false'
+
+      - name: Verify documentation and redirect files
+        run: |
+          test -f fixtures/sample-crate/target/doc/index.html
+          test -f fixtures/sample-crate/target/doc/.nojekyll
+          test -f fixtures/sample-crate/target/doc/sample_crate/index.html
+
+  test-uv-test-coverage:
+    name: Test UV Test Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Run UV Test Coverage Action
+        uses: ./uv-test-coverage
+        with:
+          working-directory: fixtures/sample-python
+          upload-artifact: 'false'
+          summary: 'true'
+
+      - name: Verify LCOV outputs
+        run: |
+          test -f fixtures/sample-python/lcov.info
+          test -f fixtures/sample-python/lcov_formatted.info
+
