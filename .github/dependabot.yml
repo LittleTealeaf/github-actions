@@ -39,3 +39,13 @@ updates:
     commit-message:
       prefix: "ci(cargo-doc-pages)"
     open-pull-requests-limit: 10
+
+  - package-ecosystem: "github-actions"
+    directory: "/uv-test-coverage"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "ci(uv-test-coverage)"
+    open-pull-requests-limit: 10

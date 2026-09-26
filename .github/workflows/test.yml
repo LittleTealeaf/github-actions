@@ -66,3 +66,23 @@ jobs:
           test -f fixtures/sample-crate/target/doc/index.html
           test -f fixtures/sample-crate/target/doc/.nojekyll
           test -f fixtures/sample-crate/target/doc/sample_crate/index.html
+
+  test-uv-test-coverage:
+    name: Test UV Test Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Run UV Test Coverage Action
+        uses: ./uv-test-coverage
+        with:
+          working-directory: fixtures/sample-python
+          upload-artifact: 'false'
+          summary: 'true'
+
+      - name: Verify LCOV outputs
+        run: |
+          test -f fixtures/sample-python/lcov.info
+          test -f fixtures/sample-python/lcov_formatted.info
+

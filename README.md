@@ -86,6 +86,27 @@ jobs:
           deploy: 'true'
 ```
 
+### `uv-test-coverage`
+Runs pytest with code coverage via `uv`, exports an LCOV coverage report, uploads the coverage artifact, and writes a coverage summary to the GitHub Actions Job Summary.
+
+```yaml
+jobs:
+  test-coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run UV Test Coverage
+        uses: LittleTealeaf/github-actions/uv-test-coverage@main
+        with:
+          python-version: '3.12'
+          uv-version: 'latest'
+          working-directory: '.'
+          args: '' # optional extra pytest arguments, e.g. "-v" or "--cov-fail-under=80"
+          output-path: 'lcov.info'
+          artifact-name: 'lcov' # set to '' to disable upload
+          summary: 'true'
+```
+
 ---
 
 ## Automated Releases

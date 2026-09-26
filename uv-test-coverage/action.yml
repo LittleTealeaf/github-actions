@@ -1,0 +1,88 @@
+name: 'UV Test Coverage'
+description: 'Runs pytest with code coverage via uv, generates LCOV coverage report, uploads artifact, and writes summary'
+author: 'Thomas Kwashnak'
+
+inputs:
+  python-version:
+    description: 'Python version to use'
+    required: false
+    default: '3.12'
+  uv-version:
+    description: 'uv version to install'
+    required: false
+    default: 'latest'
+  working-directory:
+    description: 'Working directory for uv commands'
+    required: false
+    default: '.'
+  args:
+    description: 'Additional arguments passed to pytest'
+    required: false
+    default: ''
+  output-path:
+    description: 'LCOV output file path'
+    required: false
+    default: 'lcov.info'
+  upload-artifact:
+    description: 'Whether to upload LCOV file as an artifact'
+    required: false
+    default: 'true'
+  artifact-name:
+    description: 'Name of the uploaded artifact (if left blank, artifact upload is skipped)'
+    required: false
+    default: 'lcov'
+  retention-days:
+    description: 'Duration (days) to retain the uploaded artifact'
+    required: false
+    default: '1'
+  summary:
+    description: 'Whether to write coverage summary to GitHub step summary'
+    required: false
+    default: 'true'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup uv
+      uses: astral-sh/setup-uv@f94e3d4e7e11248f4577bc82d02a1ce33ca723d1 # v5.3.1
+      with:
+        version: ${{ inputs.uv-version }}
+        python-version: ${{ inputs.python-version }}
+        enable-cache: true
+
+    - name: Run Tests with Coverage
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        CMD=("uv" "run" "pytest" "--cov" "--cov-report=lcov:${{ inputs.output-path }}")
+
+        if [ -n "${{ inputs.args }}" ]; then
+          read -ra EXTRA <<< "${{ inputs.args }}"
+          CMD+=("${EXTRA[@]}")
+        fi
+
+        echo "Running command: ${CMD[*]}"
+        "${CMD[@]}"
+
+    - name: Upload Coverage Artifact
+      if: inputs.upload-artifact == 'true' && inputs.artifact-name != ''
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4.6.1
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ inputs.working-directory }}/${{ inputs.output-path }}
+        retention-days: ${{ inputs.retention-days }}
+
+    - name: Format Test Coverages
+      if: inputs.summary == 'true'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        if [ -f "${{ inputs.output-path }}" ]; then
+          sed "s|$GITHUB_WORKSPACE/||g" "${{ inputs.output-path }}" > lcov_formatted.info
+        fi
+
+    - name: Write Coverage to Summary
+      if: inputs.summary == 'true'
+      uses: livewing/lcov-job-summary@f61677de6678fb6f860c8d1d35c5b4540b64b1d3 # v1.3.0
+      with:
+        lcov: ${{ inputs.working-directory }}/lcov_formatted.info
