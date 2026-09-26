@@ -78,7 +78,35 @@ runs:
       working-directory: ${{ inputs.working-directory }}
       run: |
         if [ -f "${{ inputs.output-path }}" ]; then
-          sed "s|$GITHUB_WORKSPACE/||g" "${{ inputs.output-path }}" > lcov_formatted.info
+          python3 -c "
+        import os, sys
+        lcov_file = sys.argv[1]
+        out_file = 'lcov_formatted.info'
+        workspace = os.environ.get('GITHUB_WORKSPACE') or os.getcwd()
+        cwd = os.getcwd()
+        rel = os.path.relpath(cwd, workspace)
+        prefix = '' if rel in ('.', '') else rel.rstrip('/') + '/'
+
+        with open(lcov_file, 'r') as f:
+            lines = f.readlines()
+
+        new_lines = []
+        for line in lines:
+            if line.startswith('SF:'):
+                p = line[3:].rstrip('\r\n')
+                if workspace and p.startswith(workspace + '/'):
+                    p = p[len(workspace) + 1:]
+                elif not os.path.isabs(p):
+                    p = prefix + p
+                elif p.startswith(cwd + '/'):
+                    p = prefix + p[len(cwd) + 1:]
+                new_lines.append(f'SF:{p}\n')
+            else:
+                new_lines.append(line)
+
+        with open(out_file, 'w') as f:
+            f.writelines(new_lines)
+        " "${{ inputs.output-path }}"
         fi
 
     - name: Write Coverage to Summary
