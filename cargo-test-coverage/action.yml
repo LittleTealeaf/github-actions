@@ -90,7 +90,7 @@ runs:
         components: ${{ inputs.components }}
 
     - name: Install Components
-      uses: taiki-e/install-action@9114bf4d891761788c546334fd37538eae1bf8b3 # v2.49.18
+      uses: taiki-e/install-action@94c31af3204a9f15ab40b35ad084410b905bbc73 # v2.49.18
       with:
         tool: cargo-llvm-cov
 
