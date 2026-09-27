@@ -35,10 +35,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v2
+        with:
+          components: llvm-tools
       - name: Run Cargo Test Coverage
         uses: LittleTealeaf/github-actions/cargo-test-coverage@main
         with:
-          toolchain: 'stable'
           workspaces: '' # optional space-separated list, e.g. "crate-a crate-b", or 'true' to pass --workspace
           features: '' # optional feature flags, e.g. "feat1,feat2" or 'all' for --all-features
           all-targets: 'false'

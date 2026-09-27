@@ -3,14 +3,6 @@ description: 'Runs cargo llvm-cov test, generates LCOV coverage report, uploads 
 author: 'Thomas Kwashnak'
 
 inputs:
-  toolchain:
-    description: 'Rust toolchain version to use'
-    required: false
-    default: 'stable'
-  components:
-    description: 'Rust toolchain components'
-    required: false
-    default: 'llvm-tools'
   working-directory:
     description: 'Working directory for cargo commands'
     required: false
@@ -83,12 +75,6 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: Setup Rust
-      uses: actions-rust-lang/setup-rust-toolchain@ecabd13d1c56bd1345c230e542e9144811ad706f # v2.0.0
-      with:
-        toolchain: ${{ inputs.toolchain }}
-        components: ${{ inputs.components }}
-
     - name: Install Components
       uses: taiki-e/install-action@94c31af3204a9f15ab40b35ad084410b905bbc73 # v2.49.18
       with:
