@@ -42,7 +42,7 @@ runs:
         components: ${{ inputs.components }}
 
     - name: Install Components
-      uses: taiki-e/install-action@94c31af3204a9f15ab40b35ad084410b905bbc73 # v2.49.18
+      uses: taiki-e/install-action@1919c4a95903d2c33e4a221102edca87309fc14b # v2.49.18
       with:
         tool: sarif-fmt,clippy-sarif
 
